@@ -1,7 +1,7 @@
 from google.adk.agents import LlmAgent
 from google.adk.tools.mcp_tool.mcp_session_manager import StreamableHTTPConnectionParams
 from google.adk.tools.mcp_tool.mcp_toolset import McpToolset
-from gService import get_dyna_key_env
+from gService import get_env_key
 
 root_agent = LlmAgent(
     name='Expert_Fault_Manager',
@@ -27,7 +27,7 @@ root_agent = LlmAgent(
             connection_params=StreamableHTTPConnectionParams(
                 url='https://iwu38168.apps.dynatrace.com/platform-reserved/mcp-gateway/v0.1/servers/dynatrace-mcp/mcp',
                 headers={
-                    "Authorization": f"Bearer {get_dyna_key_env()}",
+                    "Authorization": f"Bearer {get_env_key("DYNA")}",
                     "Content-Type": "application/json"
                 }
             ),
