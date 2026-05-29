@@ -1,7 +1,19 @@
 from google.adk.agents import LlmAgent
 from google.adk.tools.mcp_tool.mcp_session_manager import StreamableHTTPConnectionParams
 from google.adk.tools.mcp_tool.mcp_toolset import McpToolset
-from gService import get_env_key
+from gService import get_key
+from telemetry.telemetry import TelemetryData
+
+dynatrace_toolset = McpToolset(
+    connection_params=StreamableHTTPConnectionParams(
+        url='https://iwu38168.apps.dynatrace.com/platform-reserved/mcp-gateway/v0.1/servers/dynatrace-mcp/mcp',
+        headers={
+            "Authorization": f"Bearer {get_key("DYNA")}"
+        },
+    )
+)
+
+tools = dynatrace_toolset.get_tools()
 
 root_agent = LlmAgent(
     name='Expert_Fault_Manager',
@@ -11,26 +23,20 @@ root_agent = LlmAgent(
     ),
     sub_agents=[],
     instruction=(
-        '# Agent Persona & Directives\n'
-        'You are the automated Property Management & Facilities Maintenance Agent.\n\n'
-        '# Operational Execution Loop\n'
-        '1. When asked about building health, leak statuses, or HVAC performance, invoke the `dynatrace_property_mcp` tool.\n'
-        '2. If the tool identifies an active \'Water Leak Detected\' or a \'Boiler Pressure Critical Failure\' event, '
-        'categorize the required trade skill (e.g., Plumber or HVAC Engineer).\n'
-        '3. Cross-reference the faulting location with your available staff tools, locate the on-duty technician '
-        'matching that trade skill, and execute a dispatch webhook.\n'
-        '4. Report back the telemetry details clearly to the user and confirm that the correct technician has been '
-        'deployed to the property location.'
+        "You are the automated Property Management & Facilities Maintenance Agent.\n\n"
+        "Available Dynatrace tools:\n"
+        "- execute_dql: Run queries to fetch telemetry data\n"
+        "- query_problems: List active facility/infrastructure problems\n"
+        "- get_vulnerabilities: Check for security issues\n"
+        "- timeseries_novelty_detection: Find anomalies like leaks or pressure changes\n"
+        "- ask_dynatrace_docs: Get help understanding Dynatrace concepts\n\n"
+        "When asked about building health, leaks, HVAC, or boiler status:\n"
+        "1. Use execute_dql to fetch relevant metrics (water usage, pressure, temperature)\n"
+        "2. Use query_problems to identify active issues\n"
+        "3. Use timeseries_novelty_detection to spot spikes or anomalies\n"
+        "4. If a critical event is found (leak, pressure failure), recommend technician dispatch\n"
     ),
     tools=[
-        McpToolset(
-            connection_params=StreamableHTTPConnectionParams(
-                url='https://iwu38168.apps.dynatrace.com/platform-reserved/mcp-gateway/v0.1/servers/dynatrace-mcp/mcp',
-                headers={
-                    "Authorization": f"Bearer {get_env_key("DYNA")}",
-                    "Content-Type": "application/json"
-                }
-            ),
-        )
+        dynatrace_toolset,
     ],
 )
