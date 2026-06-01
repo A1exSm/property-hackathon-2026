@@ -7,10 +7,10 @@ from pydantic import BaseModel
 app = FastAPI()
 
 # Database configuration
-DB_HOST = os.getenv("DB_HOST")  # Your Cloud SQL IP
-DB_USER = os.getenv("DB_USER")            # MySQL username
-DB_PASSWORD = os.getenv("DB_PASSWORD")        # MySQL password
-DB_PORT = os.getenv("DB_PORT")            # Default MySQL port
+DB_HOST = os.getenv("DB_HOST") # Your Cloud SQL IP
+DB_USER = os.getenv("DB_USER") # MySQL username
+DB_PASSWORD = os.getenv("DB_PASSWORD") # MySQL password
+DB_PORT = os.getenv("DB_PORT") # Default MySQL port
 
 # Connection string (MySQL + PyMySQL)
 DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}"

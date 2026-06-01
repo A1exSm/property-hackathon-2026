@@ -1,16 +1,18 @@
 from typing import Literal
-from google.cloud import secretmanager
-from dotenv import load_dotenv
 import os
+from google.cloud import secretmanager
 import hashlib
 import secrets
 import base64
 
-
-#.env
-
 def __get_env(key: str) -> str:
-    base64_value = os.getenv(key)  # retrieve key
+    project_id = os.getenv('PROJECT_ID')
+    if not project_id:
+        raise ValueError("project_id environment variable is not set.")
+    client = secretmanager.SecretManagerServiceClient()
+    name = f"projects/{project_id}/secrets/{key}/versions/1"
+    response = client.access_secret_version(request={"name": name})
+    base64_value = response.payload.data.decode("UTF-8")  # retrieve key
     if base64_value is None:
         raise ValueError(f"{key} environment variable is not set.")
     return base64_value
@@ -45,4 +47,3 @@ def get_key(env_id: Literal["DYNA", "GEMI", "DB_USER", "DB_PASS", "DB_PORT", "DB
     if not __compare_hash(env_id, decoded_value):
         raise ValueError(f"{key} environment variable does not contain a valid key.")
     return decoded_value
-

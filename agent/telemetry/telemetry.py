@@ -147,15 +147,15 @@ class TelemetryData:
                 building.complaint_history.append(complaint)
             self.buildingStore.add(building)
 
-tel = TelemetryData()
-for b in tel.buildingStore:
-    print(f"\n\n----Building: {b.name}----")
-    print(f"\n--Overview--\nDevices: {len(b.devices)}\nActive Complaints: {len(b.active_complaints)}\nComplaint History: {len(b.complaint_history)}")
-    print(f"\n--Devices--")
-    for d in b.devices:
-        print(f"Device Name: {d.name}\nType: {d.type}\nData: {d.data}")
-    print(f"\n--Complaint History--")
-    for c in b.complaint_history:
-        print(f"Date: {c.date_time}\nTitle: {c.title}\nDescription: {c.description}\nCategory: {c.category}\nActive: {c.isActive}")
+# tel = TelemetryData()
+# for b in tel.buildingStore:
+#     print(f"\n\n----Building: {b.name}----")
+#     print(f"\n--Overview--\nDevices: {len(b.devices)}\nActive Complaints: {len(b.active_complaints)}\nComplaint History: {len(b.complaint_history)}")
+#     print(f"\n--Devices--")
+#     for d in b.devices:
+#         print(f"Device Name: {d.name}\nType: {d.type}\nData: {d.data}")
+#     print(f"\n--Complaint History--")
+#     for c in b.complaint_history:
+#         print(f"Date: {c.date_time}\nTitle: {c.title}\nDescription: {c.description}\nCategory: {c.category}\nActive: {c.isActive}")
 
 
