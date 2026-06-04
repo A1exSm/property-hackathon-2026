@@ -33,10 +33,10 @@ def __compare_hash(env_id:Literal["DYNA","GEMI"], decoded_value:str) -> bool:
     return secrets.compare_digest(value_sha256, expected_hashes[env_id])
 
 
-ids = {"DYNA":"PLAT_TOKEN","GEMI":"GOOGLE_API_KEY","DB_USER": "DB_USERNAME", "DB_PASS": "DB_PASSWORD", "DB_PORT": "DB_PORT", "DB_HOST": "DB_HOST", }
+ids = {"OPEN_PIPE":"API_TOKEN","DYNA":"PLAT_TOKEN","GEMI":"GOOGLE_API_KEY","DB_USER": "DB_USERNAME", "DB_PASS": "DB_PASSWORD", "DB_PORT": "DB_PORT", "DB_HOST": "DB_HOST", }
 
 
-def get_key(env_id: Literal["DYNA", "GEMI", "DB_USER", "DB_PASS", "DB_PORT", "DB_HOST"]) -> str:
+def get_key(env_id: Literal["OPEN_PIPE", "DYNA", "GEMI", "DB_USER", "DB_PASS", "DB_PORT", "DB_HOST"]) -> str:
     key = ids.get(env_id)
     if not key:
         raise ValueError(f"Invalid env_id: {env_id}")

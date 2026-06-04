@@ -1,7 +1,8 @@
 import datetime
 import random
 import string
-from typing import Literal
+import time
+from typing import Literal, List
 
 # Complaint descriptions mapping for random selection
 COMPLAINT_DESCRIPTIONS = {
@@ -84,9 +85,19 @@ def get_random_description(title:Literal["Leaking pipe", "HVAC failure", "Boiler
             return random.choice(COMPLAINT_DESCRIPTIONS[key])
     return f"Resident submitted a complaint titled '{title}' but no prepared description is available."
 
-
 def generate_random(length: int) -> str:
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+
+
+class Warn:
+    def __init__(self, device:Device, t, warn_type:str):
+        self.date_time = t
+        self.title = warn_type
+        self.device = {
+            "snapshot": device.data.copy(),
+            "name": device.name,
+            "type": device.type
+        }
 
 
 class Device:
@@ -94,8 +105,10 @@ class Device:
         self.name = "Device_" + generate_random(8)
         self.type = _device_type
         self.data = {}
+        self.log:List[Warn] = []
         for field in telemetry_data_fields:
             self.data[field] = None
+
 
 class Complaint:
     def __init__(self, creation_date_time:datetime.datetime, _title:str, _description:str):
@@ -110,7 +123,15 @@ class Building:
         self.name = "Building_" + generate_random(5)
         self.devices = []
         self.active_complaints = []
-        self.complaint_history = []
+        self.complaint_history:List[Complaint] = []
+
+cat_device_error_report_map = {
+    "HVAC": ["temperature anomaly", "status failure"],
+    "Boiler": ["pressure anomaly", "status failure"],
+    "WaterMeter": ["water_usage anomaly", "leak_status detected"],
+    "PressureSensor": ["pressure anomaly", "anomaly_status detected"]
+}
+
 
 class TelemetryData:
     RAN_LEN = 8
@@ -136,9 +157,22 @@ class TelemetryData:
                     device = Device(device_type, "pressure", "anomaly_status")
                     device.data["pressure"] = random.uniform(1.0, 5.0)
                     device.data["anomaly_status"] = random.choice(["normal", "anomaly_detected"])
+                for wC in range(random.randint(0, 256)):
+                    warn_type = random.choice(cat_device_error_report_map[device_type])
+                    if len(device.log) == 0:
+                        warn_time = datetime.datetime.now() - datetime.timedelta(days=random.randint(60, 365))
+                    else:
+                        diff = datetime.datetime.now() - device.log[-1].date_time
+                        warn_time = device.log[-1].date_time + datetime.timedelta(days=random.randint(0, diff.days))
+                    warn = Warn(device, warn_time, warn_type)
+                    device.log.append(warn)
                 building.devices.append(device)
             for k in range(random.randint(0, 5)):
-                creation_time = datetime.datetime.now() - datetime.timedelta(days=random.randint(60, 365))
+                if len(building.complaint_history) == 0:
+                    creation_time = datetime.datetime.now() - datetime.timedelta(days=random.randint(60, 365))
+                else:
+                    diff = datetime.datetime.now() - building.complaint_history[-1].date_time
+                    creation_time = building.complaint_history[-1].date_time + datetime.timedelta(days=random.randint(0, diff.days))
                 title = random.choice(["Leaking pipe", "HVAC failure", "Boiler pressure drop", "Water meter anomaly"])
                 _description = get_random_description(title)
                 complaint = Complaint(creation_time, title, _description)
@@ -147,15 +181,35 @@ class TelemetryData:
                 building.complaint_history.append(complaint)
             self.buildingStore.add(building)
 
-# tel = TelemetryData()
-# for b in tel.buildingStore:
-#     print(f"\n\n----Building: {b.name}----")
-#     print(f"\n--Overview--\nDevices: {len(b.devices)}\nActive Complaints: {len(b.active_complaints)}\nComplaint History: {len(b.complaint_history)}")
-#     print(f"\n--Devices--")
-#     for d in b.devices:
-#         print(f"Device Name: {d.name}\nType: {d.type}\nData: {d.data}")
-#     print(f"\n--Complaint History--")
-#     for c in b.complaint_history:
-#         print(f"Date: {c.date_time}\nTitle: {c.title}\nDescription: {c.description}\nCategory: {c.category}\nActive: {c.isActive}")
 
+    def generate_warn(self):
+        building = random.choice(list(self.buildingStore))
+        device = random.choice(building.devices)
+        warn_type = random.choice(cat_device_error_report_map[device.type])
+        warn_time = datetime.datetime.now()
+        warn = Warn(device, warn_time, warn_type)
+        device.log.append(warn)
+        return warn, building
+
+    def generate_complaint(self):
+        building = random.choice(list(self.buildingStore))
+        title = random.choice(["Leaking pipe", "HVAC failure", "Boiler pressure drop", "Water meter anomaly"])
+        _description = get_random_description(title)
+        creation_time = datetime.datetime.now()
+        complaint = Complaint(creation_time, title, _description)
+        complaint.category = random.choice(["Plumbing", "HVAC", "Electrical", "General Maintenance"])
+        building.active_complaints.append(complaint)
+        building.complaint_history.append(complaint)
+        return complaint,building
+
+d = TelemetryData()
+while True:
+    time.sleep(random.randint(1, 5)/100)
+    num = random.randint(0, 100)
+    if num == 10:
+        c, b = d.generate_complaint()
+        print(f"New Complaint: {c.title} at {c.date_time} in {b.name}")
+    elif num == 9:
+        w, b = d.generate_warn()
+        print(f"New Warn: {w.title} at {w.date_time} in {b.name} for device {w.device['name']}")
 
