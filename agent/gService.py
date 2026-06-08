@@ -1,18 +1,16 @@
 from typing import Literal
 import os
-from google.cloud import secretmanager
 import hashlib
 import secrets
 import base64
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
 def __get_env(key: str) -> str:
-    project_id = os.getenv('PROJECT_ID')
-    if not project_id:
-        raise ValueError("project_id environment variable is not set.")
-    client = secretmanager.SecretManagerServiceClient()
-    name = f"projects/{project_id}/secrets/{key}/versions/1"
-    response = client.access_secret_version(request={"name": name})
-    base64_value = response.payload.data.decode("UTF-8")  # retrieve key
+    base64_value = os.getenv(key)
     if base64_value is None:
         raise ValueError(f"{key} environment variable is not set.")
     return base64_value
