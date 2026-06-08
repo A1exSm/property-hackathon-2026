@@ -1,7 +1,6 @@
 import datetime
 import random
 import string
-import time
 from typing import Literal, List
 
 # Complaint descriptions mapping for random selection
@@ -85,8 +84,14 @@ def get_random_description(title:Literal["Leaking pipe", "HVAC failure", "Boiler
             return random.choice(COMPLAINT_DESCRIPTIONS[key])
     return f"Resident submitted a complaint titled '{title}' but no prepared description is available."
 
+
+used_strings = set()
+
 def generate_random(length: int) -> str:
-    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+    rand = ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+    if rand in used_strings:
+        return generate_random(length)
+    return rand
 
 
 class Warn:
@@ -110,20 +115,23 @@ class Device:
             self.data[field] = None
 
 
+
 class Complaint:
     def __init__(self, creation_date_time:datetime.datetime, _title:str, _description:str):
         self.date_time = creation_date_time
         self.title = _title
         self.description = _description
         self.category = None
-        self.isActive = True
+        self.is_active = True
+
 
 class Building:
     def __init__(self):
         self.name = "Building_" + generate_random(5)
-        self.devices = []
-        self.active_complaints = []
+        self.devices:List[Device] = []
+        self.active_complaints:List[Complaint] = []
         self.complaint_history:List[Complaint] = []
+
 
 cat_device_error_report_map = {
     "HVAC": ["temperature anomaly", "status failure"],
@@ -135,9 +143,8 @@ cat_device_error_report_map = {
 
 class TelemetryData:
     RAN_LEN = 8
-    def __init__(self):
-        self.buildingStore = set([])
-        for i in range(5000):
+    def gen(self, num_buildings=5000, min_devices=4, max_devices=40, min_complaints=0, max_complaints=5, min_warns=0, max_warns=256):
+        for i in range(num_buildings):
             building = Building()
             for j in range(random.randint(4, 40)):
                 device_type = random.choice(["HVAC", "Boiler", "WaterMeter", "PressureSensor"])
@@ -177,13 +184,17 @@ class TelemetryData:
                 _description = get_random_description(title)
                 complaint = Complaint(creation_time, title, _description)
                 complaint.category = random.choice(["Plumbing", "HVAC", "Electrical", "General Maintenance"])
-                complaint.isActive = False
+                complaint.is_active = False
                 building.complaint_history.append(complaint)
-            self.buildingStore.add(building)
+            self.building_store.add(building)
+
+
+    def __init__(self):
+        self.building_store = set([])
 
 
     def generate_warn(self):
-        building = random.choice(list(self.buildingStore))
+        building = random.choice(list(self.building_store))
         device = random.choice(building.devices)
         warn_type = random.choice(cat_device_error_report_map[device.type])
         warn_time = datetime.datetime.now()
@@ -192,7 +203,7 @@ class TelemetryData:
         return warn, building
 
     def generate_complaint(self):
-        building = random.choice(list(self.buildingStore))
+        building = random.choice(list(self.building_store))
         title = random.choice(["Leaking pipe", "HVAC failure", "Boiler pressure drop", "Water meter anomaly"])
         _description = get_random_description(title)
         creation_time = datetime.datetime.now()
@@ -202,14 +213,14 @@ class TelemetryData:
         building.complaint_history.append(complaint)
         return complaint,building
 
-d = TelemetryData()
-while True:
-    time.sleep(random.randint(1, 5)/100)
-    num = random.randint(0, 100)
-    if num == 10:
-        c, b = d.generate_complaint()
-        print(f"New Complaint: {c.title} at {c.date_time} in {b.name}")
-    elif num == 9:
-        w, b = d.generate_warn()
-        print(f"New Warn: {w.title} at {w.date_time} in {b.name} for device {w.device['name']}")
+# d = TelemetryData()
+# while True:
+#     time.sleep(random.randint(1, 5)/100)
+#     num = random.randint(0, 100)
+#     if num == 10:
+#         c, b = d.generate_complaint()
+#         print(f"New Complaint: {c.title} at {c.date_time} in {b.name}")
+#     elif num == 9:
+#         w, b = d.generate_warn()
+#         print(f"New Warn: {w.title} at {w.date_time} in {b.name} for device {w.device['name']}")
 
